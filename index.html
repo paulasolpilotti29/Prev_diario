@@ -325,24 +325,12 @@ async function cargarExcelAutomatico(){
 
     try{
 
-        console.log("Cargando Excel automático...");
+        console.log("Cargando JSON...");
 
-        const response = await fetch(
-            "./TPM_Preventivos_Diarios.xlsx"
-        );
+        const response =
+        await fetch("./TPM_Preventivos_Diarios.json");
 
-        const data = await response.arrayBuffer();
-
-        const wb = XLSX.read(
-            data,
-            {type:'array'}
-        );
-
-        const ws = wb.Sheets[
-            wb.SheetNames[0]
-        ];
-
-        raw = XLSX.utils.sheet_to_json(ws);
+        raw = await response.json();
 
         console.log(
             "Registros cargados:",
@@ -359,7 +347,7 @@ async function cargarExcelAutomatico(){
         console.error(error);
 
         alert(
-            "No se pudo cargar el archivo Excel."
+            "No se pudo cargar el JSON."
         );
 
     }
