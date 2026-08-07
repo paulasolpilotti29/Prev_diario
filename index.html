@@ -124,14 +124,36 @@ max-width:100%;
 </div>
 <script>
 let raw=[],charts=[];
-function excelToDate(serial){
-    let utc_days = Math.floor(serial - 25569);
-    let utc_value = utc_days * 86400;
-    let date_info = new Date(utc_value * 1000);
-    let dia = String(date_info.getDate()).padStart(2,'0');
-    let mes = String(date_info.getMonth()+1).padStart(2,'0');
-    let anio = date_info.getFullYear();
-    return dia + '/' + mes + '/' + anio;}
+function excelToDate(valor){
+
+    if(!valor) return '';
+
+    // Fecha Excel numérica
+    if(!isNaN(valor)){
+
+        let utc_days = Math.floor(Number(valor)-25569);
+        let utc_value = utc_days * 86400;
+        let date_info = new Date(utc_value * 1000);
+
+        let dia = String(date_info.getDate()).padStart(2,'0');
+        let mes = String(date_info.getMonth()+1).padStart(2,'0');
+        let anio = date_info.getFullYear();
+
+        return dia + '/' + mes + '/' + anio;
+    }
+
+    // Fecha texto
+    let fecha = new Date(valor);
+
+    if(!isNaN(fecha)){
+
+        let dia = String(fecha.getDate()).padStart(2,'0');
+        let mes = String(fecha.getMonth()+1).padStart(2,'0');
+        let anio = fecha.getFullYear();
+
+        return dia + '/' + mes + '/' + anio;
+    }
+
 function destroy(){    charts.forEach(c=>c.destroy());    charts=[];}
 function loadFilters(data){['Sector','Turno'].forEach(f=>{    let el=document.getElementById('f'+f);    el.innerHTML='<option value="">Todos</option>';    [...new Set(data.map(x=>x[f]))]    .sort()    .forEach(v=>{        if(v){            el.innerHTML+=`<option>${v}</option>`;        }    });});
 let e=document.getElementById('fEstado');
@@ -333,6 +355,8 @@ function renderHeatmap(data){
         raw = await response.json();
 
         console.log("Registros cargados:", raw.length);
+        console.log(raw[0]);
+        console.log(raw[0].Fecha);
 
         loadFilters(raw);
 
@@ -347,7 +371,6 @@ function renderHeatmap(data){
 
     }
 }
-
     return valor;
 }
 document.getElementById('fSector').onchange=render;
