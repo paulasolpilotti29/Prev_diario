@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang='es'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>TPM Preventivos Diarios</title>
+<script src='https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+<style>
+body{margin:0;font-family:Segoe UI,Arial;background:#eef3f8;color:#1f2937}
+.header{background:#0b4f8a;color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.btn{padding:10px 14px;border:none;border-radius:8px;cursor:pointer}
+.layout{display:grid;grid-template-columns:260px 1fr;gap:12px;padding:12px}
+.card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.chart-card{
+    height:220px;
+    position:relative;
+    overflow:hidden;
+}
+.chart-card canvas{    width:100% !important;    height:180px !important;}
+.charts-2{    display:grid;    grid-template-columns:1fr 1fr;    gap:12px;    margin-top:12px;}
+.sidebar select{width:100%;padding:8px;margin:6px 0 12px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.kpi .v{font-size:30px;font-weight:bold}
+.charts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px;}
+table{width:100%;border-collapse:collapse}th,td{padding:6px;border:1px solid #ddd}th{background:#0b4f8a;color:white;position:sticky;top:0}
+.scroll{
+max-height:220px;
+overflow:auto
+}
+.green{color:#16a34a}.yellow{color:#ca8a04}.red{color:#dc2626}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class='header'>    <h2>TABLERO TPM PREVENTIVOS DIARIOS</h2>    <div>        <span style="font-size:14px">
+📊 Datos cargados automáticamente
+</span>
+    </div>
+</div>
+<div class='layout'>
+<div class='card sidebar'>
+<h3>Filtros</h3>
+<label>Días Laborables</label><select id="fLaborable">    <option value="">Todos</option></select>
+<label>Año</label><select id='fAnio'><option value=''>Todos</option></select>
+<label>Mes</label><select id="fMes">    <option value="">Todos</option></select>
+<label>Sector</label><select id='fSector'><option value=''>Todos</option></select>
+<label>Turno</label><select id='fTurno'><option value=''>Todos</option></select>
+<label>Estado</label><select id='fEstado'><option value=''>Todos</option></select>
+
+</div>
+<div>
+<div class='kpis'>
+<div class='card kpi'><div>% Cumplimiento</div><div id='kpiPct' class='v'>-</div></div>
+<div class='card kpi'><div>Registros</div><div id='kpiReg' class='v'>-</div></div>
+<div class='card kpi'><div>Cumple</div><div id='kpiCum' class='v'>-</div></div>
+<div class='card kpi'><div>No Cumple</div><div id='kpiNo' class='v'>-</div></div>
+<div class='card kpi'><div>Sectores</div><div id='kpiSec' class='v'>-</div></div>
+</div>
+<!-- FILA 1 -->
+<div class="charts-2">
+
+    <div class="card chart-card">
+    <canvas id="donut"></canvas>
+</div>
+
+    <div class="card chart-card">
+        <canvas id="sector"></canvas>
+    </div>
+
+</div>
+
+<!-- FILA 2 -->
+
+<div class="charts-2" style="margin-top:12px;">
+
+    <div class="card chart-card">
+        <canvas id="turno"></canvas>
+    </div>
+
+    <div class="card" style="height:250px">
+    <canvas id="estado"></canvas>
+</div>
+
+</div>
+
+<!-- FILA 3 -->
+
+<div class="card" style="margin-top:12px">
+    <h3>Heatmap Semana × Sector</h3>
+
+    <div style="
+overflow-x:auto;
+overflow-y:auto;
+max-height:300px;
+max-width:100%;
+">
+
+        <table id="heatmapTable"></table>
+
+    </div>
+</div>
+
+<!-- FILA 4 -->
+
+<div class="card" style="margin-top:12px">
+    <h3>Detalle</h3>
+
+    <div class="scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Turno</th>
+                    <th>Sector</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+
+            <tbody id="tbody"></tbody>
+
+        </table>
+    </div>
+</div>
+<script>
+let raw=[],charts=[];
+function excelToDate(serial){
+    let utc_days = Math.floor(serial - 25569);
+    let utc_value = utc_days * 86400;
+    let date_info = new Date(utc_value * 1000);
+    let dia = String(date_info.getDate()).padStart(2,'0');
+    let mes = String(date_info.getMonth()+1).padStart(2,'0');
+    let anio = date_info.getFullYear();
+    return dia + '/' + mes + '/' + anio;}
+function destroy(){    charts.forEach(c=>c.destroy());    charts=[];}
+function loadFilters(data){['Sector','Turno'].forEach(f=>{    let el=document.getElementById('f'+f);    el.innerHTML='<option value="">Todos</option>';    [...new Set(data.map(x=>x[f]))]    .sort()    .forEach(v=>{        if(v){            el.innerHTML+=`<option>${v}</option>`;        }    });});
+let e=document.getElementById('fEstado');
+e.innerHTML='<option value="">Todos</option>';
+['CUMPLE','NO CUMPLE'].forEach(v=>    e.innerHTML+=`<option>${v}</option>`);
+let anio=document.getElementById('fAnio');
+anio.innerHTML='<option value="">Todos</option>';
+let anios=[    ...new Set(        data.map(r=>{            let sem=String(r.Semana || '');            return sem.substring(0,4);        })    )].filter(a=>a).sort();anios.forEach(a=>{    anio.innerHTML+=`<option value="${a}">${a}</option>`;});
+let laborable=document.getElementById('fLaborable');
+let mes=document.getElementById('fMes');
+
+mes.innerHTML='<option value="">Todos</option>';
+
+let meses=[
+ ...new Set(
+  data.map(r=>{
+
+   let fecha=excelToDate(r.Fecha);
+
+   return fecha.substring(3,5);
+
+  })
+ )
+]
+.sort();
+
+const nombres={
+ "01":"Enero",
+ "02":"Febrero",
+ "03":"Marzo",
+ "04":"Abril",
+ "05":"Mayo",
+ "06":"Junio",
+ "07":"Julio",
+ "08":"Agosto",
+ "09":"Septiembre",
+ "10":"Octubre",
+ "11":"Noviembre",
+ "12":"Diciembre"
+};
+
+meses.forEach(m=>{
+
+ mes.innerHTML+=
+ `<option value="${m}">${nombres[m]}</option>`;
+
+});
+
+console.log("Meses encontrados:",meses);
+laborable.innerHTML='<option value="">Todos</option>'+'<option value="1">Laborables</option>'+'<option value="0">No Laborables</option>';
+console.log(anios);}
+function render(){
+let data=raw.filter(r=>
+(!fSector.value || r.Sector==fSector.value)
+&&
+(!fTurno.value || r.Turno==fTurno.value)
+&&
+(!fEstado.value || (String(r['Estado '] || r.Estado).toUpperCase()==fEstado.value))
+&&
+(!fAnio.value || String(r.Semana).startsWith(fAnio.value))
+&&
+(!fMes.value || excelToDate(r.Fecha).substring(3,5)===fMes.value)
+&&
+(!fLaborable.value || String(r.Filtro)==fLaborable.value)
+);
+let ok=data.filter(r=>Number(r.Cumple_num)==1).length;let no=data.length-ok;let pct=data.length ? (100*ok/data.length) : 0;
+kpiPct.innerHTML=pct.toFixed(1)+'%';kpiPct.className='v '+(pct>95?'green':pct>=90?'yellow':'red');
+kpiReg.innerHTML=data.length;kpiCum.innerHTML=ok;kpiNo.innerHTML=no;kpiSec.innerHTML=new Set(data.map(r=>r.Sector)).size;
+destroy();
+/* DONUT */
+charts.push(new Chart(donut,{type:'doughnut',data:{labels:['Cumple','No Cumple'],datasets:[{data:[ok,no]}]},options:{responsive:true,maintainAspectRatio:false}
+}));
+/* SECTOR */
+let s={};
+data.forEach(r=>{s[r.Sector]=(s[r.Sector]||0)+(Number(r.Cumple_num)||0);});
+charts.push(new Chart(sector,{type:'bar',data:{labels:Object.keys(s),datasets:[{label:'Cumple',data:Object.values(s)}]},
+options:{responsive:true,maintainAspectRatio:false}
+}));
+/* TURNO */
+let t={};
+data.forEach(r=>{t[r.Turno]=(t[r.Turno]||0)+(Number(r.Cumple_num)||0);});
+charts.push(new Chart(turno,{type:'bar',data:{labels:Object.keys(t),datasets:[{label:'Cumplimiento',data:Object.values(t)}]
+},options:{responsive:true,maintainAspectRatio:false}
+}));
+/* PROGRESO SEMANAL */
+let semanas={};
+data.forEach(r=>{
+let sem=r.Semana;if(!semanas[sem]){semanas[sem]={ok:0,total:0};}semanas[sem].total++;
+if(Number(r.Cumple_num)==1){semanas[sem].ok++;}});
+let lbl=Object.keys(semanas).sort();
+let val=lbl.map(s=>(semanas[s].ok/semanas[s].total)*100);
+charts.push(new Chart(estado,{type:'line',data:{labels:lbl,datasets:[{label:'% Cumplimiento Semanal',data:val,borderWidth:3,
+tension:0.3,fill:false}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100}}}}
+));
+/* TABLA */
+tbody.innerHTML=data.slice(0,2000).map(r=>
+`<tr>
+<td>${excelToDate(r.Fecha)}</td>
+<td>${r.Turno||''}</td>
+<td>${r.Sector||''}</td>
+<td>${r['Estado ']||r.Estado||''}</td>
+</tr>`
+).join('');
+
+renderHeatmap(data);
+
+}
+function renderHeatmap(data){
+
+    let mapa={};
+
+    data.forEach(r=>{
+
+        let sector=r.Sector;
+        let semana=r.Semana;
+
+        if(!mapa[sector]){
+            mapa[sector]={};
+        }
+
+        if(!mapa[sector][semana]){
+            mapa[sector][semana]={
+                ok:0,
+                total:0
+            };
+        }
+
+        mapa[sector][semana].total++;
+
+        if(Number(r.Cumple_num)==1){
+            mapa[sector][semana].ok++;
+        }
+
+    });
+
+    let semanas=[
+    ...new Set(data.map(r=>r.Semana))
+]
+.sort()
+.slice(-26);
+
+    let html='<tr><th>Sector</th>';
+
+    semanas.forEach(s=>{
+        html+=`<th>${s}</th>`;
+    });
+
+    html+='</tr>';
+
+    Object.keys(mapa).sort().forEach(sector=>{
+
+        html+=`<tr><td><b>${sector}</b></td>`;
+
+        semanas.forEach(sem=>{
+
+            let valor=0;
+
+            if(mapa[sector][sem]){
+                valor=
+                (mapa[sector][sem].ok /
+                mapa[sector][sem].total)*100;
+            }
+
+            let color='#f4a6a6';
+
+            if(valor>=95){
+                color='#8dd48d';
+            }
+            else if(valor>=85){
+                color='#f7dc7c';
+            }
+
+            html+=
+            `<td style="
+                background:${color};
+                text-align:center;
+                font-weight:bold;
+            ">
+                ${valor.toFixed(0)}%
+            </td>`;
+        });
+
+        html+='</tr>';
+
+    });
+
+    document.getElementById('heatmapTable').innerHTML=html;
+
+}
+async function cargarExcelAutomatico(){
+
+    try{
+
+        console.log("Cargando Excel automático...");
+
+        const response = await fetch(
+            "./TPM_Preventivos_Diarios.xlsx"
+        );
+
+        const data = await response.arrayBuffer();
+
+        const wb = XLSX.read(
+            data,
+            {type:'array'}
+        );
+
+        const ws = wb.Sheets[
+            wb.SheetNames[0]
+        ];
+
+        raw = XLSX.utils.sheet_to_json(ws);
+
+        console.log(
+            "Registros cargados:",
+            raw.length
+        );
+
+        loadFilters(raw);
+
+        render();
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        alert(
+            "No se pudo cargar el archivo Excel."
+        );
+
+    }
+}
+document.getElementById('fSector').onchange=render;
+document.getElementById('fTurno').onchange=render;
+document.getElementById('fEstado').onchange=render;
+document.getElementById('fAnio').onchange=render;
+document.getElementById('fLaborable').onchange=render;
+document.getElementById('fMes').onchange=render;
+
+cargarExcelAutomatico();
+</script></body></html>
