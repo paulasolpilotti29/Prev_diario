@@ -321,36 +321,25 @@ function renderHeatmap(data){
     document.getElementById('heatmapTable').innerHTML=html;
 
 }
-async function cargarExcelAutomatico(){
+function excelToDate(valor){
 
-    try{
+    if(!valor) return '';
 
-        console.log("Cargando JSON...");
+    // Fecha Excel numérica
+    if(!isNaN(valor)){
+        let utc_days = Math.floor(Number(valor) - 25569);
+        let utc_value = utc_days * 86400;
+        let date_info = new Date(utc_value * 1000);
 
-        const response =
-        await fetch("./tableConvert.com_a56hvw.json");
+        let dia = String(date_info.getDate()).padStart(2,'0');
+        let mes = String(date_info.getMonth()+1).padStart(2,'0');
+        let anio = date_info.getFullYear();
 
-        raw = await response.json();
-
-        console.log(
-            "Registros cargados:",
-            raw.length
-        );
-
-        loadFilters(raw);
-
-        render();
-
+        return dia + '/' + mes + '/' + anio;
     }
-    catch(error){
 
-        console.error(error);
-
-        alert(
-            "No se pudo cargar el JSON."
-        );
-
-    }
+    // Si ya viene como texto
+    return valor;
 }
 document.getElementById('fSector').onchange=render;
 document.getElementById('fTurno').onchange=render;
