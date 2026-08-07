@@ -207,10 +207,7 @@ let data=raw.filter(r=>
 &&
 (!fAnio.value || String(r.Semana).startsWith(fAnio.value))
 &&
-(
- !fMes.value ||
- String(r.Fecha).split('/')[1].padStart(2,'0') === fMes.value
-)
+(!fMes.value || String(r.Fecha).split('/')[1].padStart(2,'0')===fMes.value)
 &&
 (!fLaborable.value || String(r.Filtro)==fLaborable.value)
 );
@@ -366,7 +363,6 @@ function renderHeatmap(data){
 
     }
 }
-
 document.getElementById('fSector').onchange=render;
 document.getElementById('fTurno').onchange=render;
 document.getElementById('fEstado').onchange=render;
