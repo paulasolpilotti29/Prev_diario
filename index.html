@@ -128,19 +128,22 @@ function excelToDate(valor){
 
     if(!valor) return '';
 
-    let partes = String(valor).split('/');
+    let partes = String(valor).trim().split('/');
 
     if(partes.length===3){
 
-        let mes = partes[0].padStart(2,'0');
-        let dia = partes[1].padStart(2,'0');
-        let anio = partes[2];
+        let mes = partes[0].trim();
+        let dia = partes[1].trim();
+        let anio = partes[2].trim();
+
+        mes = mes.padStart(2,'0');
+        dia = dia.padStart(2,'0');
 
         if(anio.length===2){
             anio='20'+anio;
         }
 
-        return dia + '/' + mes + '/' + anio;
+        return `${dia}/${mes}/${anio}`;
     }
 
     return valor;
@@ -192,8 +195,12 @@ const nombres={
 
 meses.forEach(m=>{
 
- mes.innerHTML+=
- `<option value="${m}">${nombres[m]}</option>`;
+    if(nombres[m]){
+
+        mes.innerHTML +=
+        `<option value="${m}">${nombres[m]}</option>`;
+
+    }
 
 });
 
