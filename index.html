@@ -128,21 +128,21 @@ function excelToDate(valor){
 
     if(!valor) return '';
 
-    // Si viene como número Excel
-    if(!isNaN(valor)){
+    let partes = String(valor).split('/');
 
-        let utc_days = Math.floor(Number(valor)-25569);
-        let utc_value = utc_days * 86400;
-        let date_info = new Date(utc_value * 1000);
+    if(partes.length===3){
 
-        let dia = String(date_info.getDate()).padStart(2,'0');
-        let mes = String(date_info.getMonth()+1).padStart(2,'0');
-        let anio = date_info.getFullYear();
+        let mes = partes[0].padStart(2,'0');
+        let dia = partes[1].padStart(2,'0');
+        let anio = partes[2];
+
+        if(anio.length===2){
+            anio='20'+anio;
+        }
 
         return dia + '/' + mes + '/' + anio;
     }
 
-    // Si viene como texto tipo 8/9/23
     return valor;
 }
 
@@ -165,12 +165,15 @@ let meses=[
 
    let partes=String(r.Fecha).split('/');
 
-   return partes[1].padStart(2,'0');
+   // Formato MM/DD/YY
+   return partes[0].padStart(2,'0');
 
   })
  )
 ]
+.filter(m=>Number(m)>=1 && Number(m)<=12)
 .sort();
+
 
 const nombres={
  "01":"Enero",
@@ -207,7 +210,7 @@ let data=raw.filter(r=>
 &&
 (!fAnio.value || String(r.Semana).startsWith(fAnio.value))
 &&
-(!fMes.value || String(r.Fecha).split('/')[1].padStart(2,'0')===fMes.value)
+(!fMes.value || String(r.Fecha).split('/')[0].padStart(2,'0')===fMes.value)
 &&
 (!fLaborable.value || String(r.Filtro)==fLaborable.value)
 );
