@@ -321,6 +321,32 @@ function renderHeatmap(data){
     document.getElementById('heatmapTable').innerHTML=html;
 
 }
+    async function cargarExcelAutomatico(){
+
+    try{
+
+        console.log("Cargando JSON...");
+
+        const response =
+            await fetch("./TPM_Preventivos_Diarios.json");
+
+        raw = await response.json();
+
+        console.log("Registros cargados:", raw.length);
+
+        loadFilters(raw);
+
+        render();
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        alert("No se pudo cargar el JSON.");
+
+    }
+}
 function excelToDate(valor){
 
     if(!valor) return '';
