@@ -128,7 +128,7 @@ function excelToDate(valor){
 
     if(!valor) return '';
 
-    // Fecha Excel numérica
+    // Si viene como número Excel
     if(!isNaN(valor)){
 
         let utc_days = Math.floor(Number(valor)-25569);
@@ -142,17 +142,9 @@ function excelToDate(valor){
         return dia + '/' + mes + '/' + anio;
     }
 
-    // Fecha texto
-    let fecha = new Date(valor);
-
-    if(!isNaN(fecha)){
-
-        let dia = String(fecha.getDate()).padStart(2,'0');
-        let mes = String(fecha.getMonth()+1).padStart(2,'0');
-        let anio = fecha.getFullYear();
-
-        return dia + '/' + mes + '/' + anio;
-    }
+    // Si viene como texto tipo 8/9/23
+    return valor;
+}
 
 function destroy(){    charts.forEach(c=>c.destroy());    charts=[];}
 function loadFilters(data){['Sector','Turno'].forEach(f=>{    let el=document.getElementById('f'+f);    el.innerHTML='<option value="">Todos</option>';    [...new Set(data.map(x=>x[f]))]    .sort()    .forEach(v=>{        if(v){            el.innerHTML+=`<option>${v}</option>`;        }    });});
@@ -171,9 +163,9 @@ let meses=[
  ...new Set(
   data.map(r=>{
 
-   let fecha=excelToDate(r.Fecha);
+   let partes=String(r.Fecha).split('/');
 
-   return fecha.substring(3,5);
+   return partes[1].padStart(2,'0');
 
   })
  )
@@ -215,7 +207,10 @@ let data=raw.filter(r=>
 &&
 (!fAnio.value || String(r.Semana).startsWith(fAnio.value))
 &&
-(!fMes.value || excelToDate(r.Fecha).substring(3,5)===fMes.value)
+(
+ !fMes.value ||
+ String(r.Fecha).split('/')[1].padStart(2,'0') === fMes.value
+)
 &&
 (!fLaborable.value || String(r.Filtro)==fLaborable.value)
 );
