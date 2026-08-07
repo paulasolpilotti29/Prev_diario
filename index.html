@@ -328,7 +328,7 @@ function renderHeatmap(data){
         console.log("Cargando JSON...");
 
         const response =
-            await fetch("./TPM_Preventivos_Diarios.json");
+            await fetch("./tableConvert.com_a56hvw.json");
 
         raw = await response.json();
 
@@ -347,24 +347,7 @@ function renderHeatmap(data){
 
     }
 }
-function excelToDate(valor){
 
-    if(!valor) return '';
-
-    // Fecha Excel numérica
-    if(!isNaN(valor)){
-        let utc_days = Math.floor(Number(valor) - 25569);
-        let utc_value = utc_days * 86400;
-        let date_info = new Date(utc_value * 1000);
-
-        let dia = String(date_info.getDate()).padStart(2,'0');
-        let mes = String(date_info.getMonth()+1).padStart(2,'0');
-        let anio = date_info.getFullYear();
-
-        return dia + '/' + mes + '/' + anio;
-    }
-
-    // Si ya viene como texto
     return valor;
 }
 document.getElementById('fSector').onchange=render;
