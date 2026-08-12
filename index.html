@@ -345,20 +345,42 @@ function renderHeatmap(data){
     document.getElementById('heatmapTable').innerHTML=html;
 
 }
-    async function cargarExcelAutomatico(){
+   async function cargarExcelAutomatico(){
 
     try{
 
         console.log("Cargando JSON...");
 
         const response =
-            await fetch("./excel-to-json.json");
+            await fetch("./tableConvert.com_a56hvw1.json");
+
+        if(!response.ok){
+            throw new Error("No se encontró el archivo JSON");
+        }
 
         raw = await response.json();
 
+        console.log("Datos recibidos:", raw);
+
+              if(!Array.isArray(raw)){
+
+            if(raw.data){
+                raw = raw.data;
+            }
+            else if(raw.registros){
+                raw = raw.registros;
+            }
+            else{
+                throw new Error("El JSON no contiene un array válido");
+            }
+
+        }
+
         console.log("Registros cargados:", raw.length);
-        console.log(raw[0]);
-        console.log(raw[0].Fecha);
+
+        if(raw.length === 0){
+            throw new Error("El JSON está vacío");
+        }
 
         loadFilters(raw);
 
@@ -369,9 +391,10 @@ function renderHeatmap(data){
 
         console.error(error);
 
-        alert("No se pudo cargar el JSON.");
+        alert("Error al cargar JSON: " + error.message);
 
     }
+
 }
 document.getElementById('fSector').onchange=render;
 document.getElementById('fTurno').onchange=render;
