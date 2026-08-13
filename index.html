@@ -43,7 +43,15 @@ overflow:auto
 <h3>Filtros</h3>
 <label>Días Laborables</label><select id="fLaborable">    <option value="">Todos</option></select>
 <label>Año</label><select id='fAnio'><option value=''>Todos</option></select>
-<label>Mes</label><select id="fMes">    <option value="">Todos</option></select>
+<label>Mes Desde</label>
+<select id="fMesDesde">
+    <option value="">Todos</option>
+</select>
+
+<label>Mes Hasta</label>
+<select id="fMesHasta">
+    <option value="">Todos</option>
+</select>
 <label>Sector</label><select id='fSector'><option value=''>Todos</option></select>
 <label>Turno</label><select id='fTurno'><option value=''>Todos</option></select>
 <label>Estado</label><select id='fEstado'><option value=''>Todos</option></select>
@@ -158,9 +166,12 @@ let anio=document.getElementById('fAnio');
 anio.innerHTML='<option value="">Todos</option>';
 let anios=[    ...new Set(        data.map(r=>{            let sem=String(r.Semana || '');            return sem.substring(0,4);        })    )].filter(a=>a).sort();anios.forEach(a=>{    anio.innerHTML+=`<option value="${a}">${a}</option>`;});
 let laborable=document.getElementById('fLaborable');
-let mes=document.getElementById('fMes');
+let mesDesde=document.getElementById('fMesDesde');
+let mesHasta=document.getElementById('fMesHasta');
 
-mes.innerHTML='<option value="">Todos</option>';
+mesDesde.innerHTML='<option value="">Todos</option>';
+mesHasta.innerHTML='<option value="">Todos</option>';
+
 
 let meses=[
  ...new Set(
@@ -197,12 +208,16 @@ meses.forEach(m=>{
 
     if(nombres[m]){
 
-        mes.innerHTML +=
+        mesDesde.innerHTML +=
+        `<option value="${m}">${nombres[m]}</option>`;
+
+        mesHasta.innerHTML +=
         `<option value="${m}">${nombres[m]}</option>`;
 
     }
 
 });
+
 
 console.log("Meses encontrados:",meses);
 laborable.innerHTML='<option value="">Todos</option>'+'<option value="1">Laborables</option>'+'<option value="0">No Laborables</option>';
@@ -217,7 +232,16 @@ let data=raw.filter(r=>
 &&
 (!fAnio.value || String(r.Semana).startsWith(fAnio.value))
 &&
-(!fMes.value || String(r.Fecha).split('/')[0].padStart(2,'0')===fMes.value)
+(
+ !mesDesde.value || !mesHasta.value
+ ||
+ (
+   Number(String(r.Fecha).split('/')[0].padStart(2,'0')) >= Number(mesDesde.value)
+   &&
+   Number(String(r.Fecha).split('/')[0].padStart(2,'0')) <= Number(mesHasta.value)
+ )
+)
+
 &&
 (!fLaborable.value || String(r.Filtro)==fLaborable.value)
 );
