@@ -251,14 +251,14 @@ charts.push(new Chart(estado,{type:'line',data:{labels:lbl,datasets:[{label:'% C
 tension:0.3,fill:false}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100}}}}
 ));
 /* TABLA */
-tbody.innerHTML=data.map(r=>`
-`<tr>
-<td>${excelToDate(r.Fecha)}</td>
-<td>${r.Turno||''}</td>
-<td>${r.Sector||''}</td>
-<td>${r['Estado ']||r.Estado||''}</td>
-</tr>`
-).join('');
+tbody.innerHTML = data.map(r => `
+<tr>
+    <td>${excelToDate(r.Fecha)}</td>
+    <td>${r.Turno || ''}</td>
+    <td>${r.Sector || ''}</td>
+    <td>${r['Estado '] || r.Estado || ''}</td>
+</tr>
+`).join('');
 
 renderHeatmap(data);
 
