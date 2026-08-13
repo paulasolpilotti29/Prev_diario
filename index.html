@@ -251,7 +251,7 @@ charts.push(new Chart(estado,{type:'line',data:{labels:lbl,datasets:[{label:'% C
 tension:0.3,fill:false}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100}}}}
 ));
 /* TABLA */
-tbody.innerHTML=data.slice(0,2000).map(r=>
+tbody.innerHTML=data.map(r=>`
 `<tr>
 <td>${excelToDate(r.Fecha)}</td>
 <td>${r.Turno||''}</td>
