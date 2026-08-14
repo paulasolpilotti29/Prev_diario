@@ -42,9 +42,7 @@ overflow:auto
 
 #heatmapTable th,
 #heatmapTable td{
-    width:80px;
     min-width:80px;
-    max-width:80px;
     white-space:nowrap;
 }
     #heatmapTable th{
@@ -54,13 +52,20 @@ overflow:auto
     background:#0b4f8a;
     color:white;
 }
-    #heatmapTable th:first-child,
+#heatmapTable th:first-child,
 #heatmapTable td:first-child{
     position:sticky;
     left:0;
     z-index:4;
     background:white;
     font-weight:bold;
+
+    width:250px;
+    min-width:250px;
+    max-width:250px;
+
+    text-align:left;
+    padding-left:10px;
 }
     #heatmapTable th:first-child{
     position:sticky;
